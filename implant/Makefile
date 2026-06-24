@@ -1,7 +1,7 @@
-CARGO ?= cargo
+CARGO ?= ~/.cargo/bin/cargo
 PROFILE ?= release
 
-LINUX := x86_64-unknown-linux-gnu
+LINUX := x86_64-unknown-linux-musl
 WINDOWS := x86_64-pc-windows-gnu
 
 LINUX_BIN := target/$(LINUX)/$(PROFILE)/pika
@@ -12,13 +12,15 @@ USE_CROSS := 1
 CROSS := cross
 else
 USE_CROSS := 0
-CROSS := cargo
+CROSS := $(CARGO)
 endif
 
 ifeq ($(USE_CROSS),1)
-BUILD = $(CROSS) build --target $(1) --$(PROFILE)
+BUILD_LINUX = RUSTFLAGS="-C target-feature=+crt-static" $(CROSS) build --target $(LINUX) --$(PROFILE)
+BUILD_WINDOWS = RUSTFLAGS="-C target-feature=+crt-static" $(CROSS) build --target $(WINDOWS) --$(PROFILE)
 else
-BUILD = $(CARGO) build --target $(1) --$(PROFILE)
+BUILD_LINUX = RUSTFLAGS="-C target-feature=+crt-static" $(CARGO) build --target $(LINUX) --$(PROFILE)
+BUILD_WINDOWS = RUSTFLAGS="-C target-feature=+crt-static" $(CARGO) build --target $(WINDOWS) --$(PROFILE)
 endif
 
 .PHONY: all linux windows clean help install-targets
@@ -26,23 +28,24 @@ endif
 all: linux windows
 
 linux: install-targets
-	$(call BUILD,$(LINUX))
+	$(BUILD_LINUX)
 	@cp $(LINUX_BIN) ./pika
-	@echo $(LINUX_BIN) -> ./pika
+	@file ./pika
+	@echo "$(LINUX_BIN) -> ./pika"
 
 windows: install-targets
-	$(call BUILD,$(WINDOWS))
+	$(BUILD_WINDOWS)
 	@cp $(WINDOWS_BIN) ./pika.exe
 	@file ./pika.exe
-	@echo $(WINDOWS_BIN) -> ./pika.exe
+	@echo "$(WINDOWS_BIN) -> ./pika.exe"
 
 install-targets:
-	rustup target add $(LINUX) $(WINDOWS)
+	~/.cargo/bin/rustup target add $(LINUX) $(WINDOWS)
 
 clean:
 	$(CARGO) clean
 	$(RM) ./pika ./pika.exe
 
 help:
-	@echo make linux | make windows | make all | make clean
-	@echo cross detected: $(USE_CROSS)
+	@echo "make linux | make windows | make all | make clean"
+	@echo "cross detected: $(USE_CROSS)"
