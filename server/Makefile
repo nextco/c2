@@ -1,6 +1,6 @@
 CXX ?= g++
 CXXFLAGS ?= -Wall -Wextra -O2 -std=c++17 -pthread
-LDFLAGS ?= -pthread
+LDFLAGS ?= -static -pthread
 TARGET := server
 SRC := main.cpp
 
