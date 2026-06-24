@@ -9,6 +9,7 @@ Un increible e impresionante C2 hecho por elpikachu
 - Implantes hechos en Rust ❤️
 - Server en C++
 - Multisesion
+- Port Forwarding / Relay Mode
 - Esta chido
 
 ## Como compilar
@@ -50,6 +51,13 @@ En el equipo victima
 # Linux
 ./pika <ip> <port>
 ```
+
+En un pivot
+```sh
+# Linux (For unprivileged remember use port > 1024)
+./pika <ip> <port> <relay_port>
+```
+
 
 ## Help
 ```sh
