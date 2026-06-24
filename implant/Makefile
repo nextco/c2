@@ -1,4 +1,4 @@
-CARGO ?= ~/.cargo/bin/cargo
+CARGO ?= cargo
 PROFILE ?= release
 
 LINUX := x86_64-unknown-linux-musl
@@ -40,7 +40,7 @@ windows: install-targets
 	@echo "$(WINDOWS_BIN) -> ./pika.exe"
 
 install-targets:
-	~/.cargo/bin/rustup target add $(LINUX) $(WINDOWS)
+	rustup target add $(LINUX) $(WINDOWS)
 
 clean:
 	$(CARGO) clean
